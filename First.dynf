@@ -1,0 +1,501 @@
+ 
+// Aspen Dynamics input file generated from Aspen Plus 37.0 on Sun Sep 15 12:23:43 2024
+// Aspen Plus Title:
+
+Libraries "Dynamics.acml";
+//
+//************ ACM TYPES ***********************
+//************ DO NOT EDIT!!********************
+//************ END OF ACM TYPES ****************
+//
+//
+// ********** SYSTEM SECTION - WARNING: DO NOT EDIT *************************************
+//
+DynamicsOptions as Table;
+DynamicsOptions: 
+TEXT 
+{ Version              : 1
+SizeX                  : 8035
+SizeY                  : 4020
+ShowAllVariables       : False
+ShowAllAttributes      : False
+ExpandAll              : True
+ShowRegistryAttributes : False
+VariablesPaths         : [ GlobalPropMode GlobalFlashBasis GlobalFlashSmoothTol 
+                           GlobalLLStabilityCheck GlobalPropDamping WaterID 
+                           GlobalPDriven GlobalRFlow GlobalRFlowCol GlobalLiqHead GlobalPDEReverse
+                           GlobalTimeScaler F_max P_max P_min T_max T_min TAmb PropFilter 
+                           GlobalPolMethod GlobalMax_Sites Distribution NptsMWD Upper GPC 
+                           DistType ]
+AttributesPaths        : [ Description Value Units ]
+ColumnWidths           : [ 1500 3620 1500 1100 ]
+}
+ENDTEXT;  // End of Global Table
+Solids as Table;
+Solids:
+TEXT
+    { Version : 1
+SizeX : 6045
+SizeY : 5325
+ShowAllVariables : False
+ShowAllAttributes : False
+ExpandAll : True
+ShowRegistryAttributes : False
+VariablesPaths : [ GlobalStreamClass CISolids NCSolids NIntervalsCI NIntervalsNC CAUSR1Comps CAUSR2Comps CAUSR3Comps CAUSR4Comps CAUSR5Comps CAUSRAComps CAUSRBComps CAUSRCComps CAUSRDComps CAUSREComps PROXANALComps SULFANALComps ULTANALComps GENANALComps ]
+AttributesPaths : [ Description Value ]
+ColumnWidths : [ 1575 2955 1365 ]
+}
+ENDTEXT;
+// ********** SYSTEM SECTION END ********************************************************
+// Note: VariablesPaths must have a space at the end of each line
+//
+// ********** Options Section ***********************************************************
+// Note: Make sure the AD Solver Options are to be consistent with those in .../Scripts/OnNewADScript.vb 
+OPTIONS
+  RunMode                  : "Dynamic";
+  Nonlinear.Method         : "Mixed Newton";
+  Nonlinear.MaxIter        : 150; // 500;
+  Nonlinear.MaxStepRed     : 20;
+  Tearing                  : "Update";
+  Integrator               : "ImplicitEuler"; // "VSIE";
+  Integration.StepSizeType : "Variable";
+  Integration.InitStepSize : 0.001;     // Initial integration step (hours)
+  Integration.MinStepSize  : 0.001;     // Minimum integration step (hours)
+  Integration.MaxStepSize  : 0.05;      // Maximum integration step (hours)   
+  Integration.AbsErrorTol  : 5.e-4;     // 1.e-4;
+  Integration.AbsTearTol   : 5.e-2;     // 1.e-2;
+  Integration.RelErrorTol  : 5.e-4;     // 1.e-4;
+  Integration.RelTearTol   : 5.e-2;     // 1.e-2;
+  Integration.StepSize     : 0.0025;    // Step size for fixed step Implicit Euler
+  ImpEuler.Step            : 0.0025;    // Step size for fixed step Implicit Euler 11.1
+  MA48.PivotTol            : 1.e-050;
+  VSIE.InitialStep         : 0.005;     // Initial integration step (hours)
+  VSIE.MinimumStep         : 0.001;     // Minimum integration step (hours)
+  VSIE.MaximumStep         : 0.05;      // Maximum integration step (hours)
+  VSIE.MaxCorIter          : 150;
+  VSIE.TearErrTol          : 0.01;
+  SnapshotSettings.SaveConvergedOnly: False;
+  UseSavedSnapshotOnLoad   : False;
+  CurrentUOMSet          : "METCBAR";
+END  // End of OPTIONS Section
+//
+//
+//************ Global Parameters Settings ***********************************************
+//
+WaterID as StringParameter("H2O", Description:"Component name used for water");
+WaterID: "H2O";
+
+GlobalPropMode as PropertyMode("Local", Description:"Global property mode");
+
+GlobalPDriven as logicalparameter(False, Description:"Simulation is pressure driven");
+GlobalPDriven: True; 
+
+TAmb as Temperature(10.0, Fixed, Description:"Ambient Temperature");
+TAmb: 1.000000e+01 ; 
+
+T_min as realparameter(-253.15, Description:"Temperature lower limit (C)");
+T_min: -2.631500e+02 ; 
+
+T_max as realparameter(9726.85, Description:"Temperature upper limit (C)");
+T_max: 9.726850e+03 ; 
+
+ADVersion as hidden stringparameter;
+ADVersion: "37.0"; 
+
+// End of Global Parameters Settings
+
+//
+//************ Properties Section********************************************************
+//
+PROPERTIES
+  RUNID:  "kirdyn";
+
+  Type1 AS COMPONENTLIST;
+  Type1.COMPONENTS: ["H2O"];
+  Type1.OPTION("OPSET"): "STEAM-TA";
+  Type1.OPTION("HENRY-COMPS"): "<none>";
+  Type1.OPTION("CHEMISTRY"): "<none>";
+  Type1.OPTION("FREE-WATER"): "STEAM-TA";
+  Type1.OPTION("TRUE-COMP"): "YES";
+  Type1.OPTION("SOLU-WATER"): "3";
+  Type1.OPTION("KBASE"): "1";
+  Type1.OPTION("MAXIT"): "500";
+  Type1.OPTION("TOLERANCE"): "1E-8";
+END  // End of Properties Section
+
+//
+//*********** FLOWSHEET ****************************************************************
+//
+FLOWSHEET
+  Componentlist: "Type1";
+
+//
+//*********** Global Reactions/Chemistry Structure *********************************************
+
+// Global Reactions Structure
+StructureContainer Reactions
+End
+
+//
+//*********** Global Reactions/Chemistry Structure *********************************************
+
+// Global Chemistry Structure
+StructureContainer Chemistry
+End
+
+// ACM Global Structures
+StructureContainer Structures
+End
+
+//
+//*********** BLOCKs & STREAMs Declaration *********************************************
+//
+  BLOCKS("B1") AS  VALVE;
+  STREAMS("S1") AS  MATERIALSTREAM;
+  STREAMS("S2") AS  MATERIALSTREAM;
+
+//
+//*********** Connections **************************************************************
+//
+  CONNECT INPUT of BLOCKS("B1").IN_F WITH STREAMS("S1");
+  CONNECT OUTPUT of BLOCKS("B1").OUT_P WITH STREAMS("S2");
+
+//
+//*********** PFS Data Section ***********************************************************
+//
+Graphics:
+TEXT CLSID {A0DFFFE6-908E-11CE-A964-0000C08C668E}
+# of PFS Objects = 4
+SIZE -5.6 -2.8 0.7375 0.975
+BLOCK
+ID: B1
+Version: 1
+ICON: "VALVE3"
+Flag 0
+Section GLOBAL
+At -3.700000 0.800000
+Label At 0.200000 0.150000
+Scale 1.000000 Modifier 0
+STREAM
+ID: S1
+Version: 2
+Flag 0
+GLOBAL 117
+TYPE 0 TERMINAL 1
+At -5.600000 0.800000
+Label At 0.450000 0.000000
+ROUTE 0 0
+$ $ 0.0 0.0
+ROUTE 1 0
+r r -5.600000 0.800000 0
+x x -4.700000 0.800000 0
+y y -4.700000 0.799600 0
+x x -4.000150 0.799600 0
+t l -3.800150 0.799600 0
+$ C 1.000000 0.0
+$ $ 0.0 0.0
+At 0.000000 0.000000
+Label At 0.000000 0.000000
+ROUTE 0 1
+$ $ 0.0 0.0
+ROUTE 1 1
+$ $ 0.0 0.0
+At 0.000000 0.000000
+Label At 0.000000 0.000000
+ROUTE 0 2
+$ $ 0.0 0.0
+ROUTE 1 2
+$ $ 0.0 0.0
+STREAM
+ID: S2
+Version: 2
+Flag 0
+GLOBAL 117
+TYPE 0 TERMINAL 2
+At -2.800000 0.800000
+Label At -0.200000 0.000000
+ROUTE 0 0
+r l -2.800000 0.800000 0
+x y -3.200000 0.800000 0
+y x -3.200000 0.800700 0
+x 0 -3.399950 0.800700 0
+t r -3.599950 0.800700 0
+$ C 1.000000 0.0
+$ $ 0.0 0.0
+ROUTE 1 0
+$ $ 0.0 0.0
+At 0.000000 0.000000
+Label At 0.000000 0.000000
+ROUTE 0 1
+$ $ 0.0 0.0
+ROUTE 1 1
+$ $ 0.0 0.0
+At 0.000000 0.000000
+Label At 0.000000 0.000000
+ROUTE 0 2
+$ $ 0.0 0.0
+ROUTE 1 2
+$ $ 0.0 0.0
+LEGEND
+Version: 2
+Unfixed
+# of PFS Objects = 0
+VIEWPORT -7.033334 7.033334 3.300000 -2.158333
+LAYOUT
+TableFormat 1
+Pages 1 1 1 1
+PAGESETUP
+PAPERSIZE 
+PAPERSOURCE 
+ORIENTATION -1
+PRINTPAGENO 1 1
+LEFTMARGIN 0.5"
+RIGHTMARGIN 0.5"
+TOPMARGIN 0.5"
+BOTTOMMARGIN 0.5"
+VISIBILITY 0.030000
+PFDFLAG 255 255
+PFDMODE 0
+SCALE 0.008333
+
+ENDTEXT;  // END of PFS Data Section
+
+//
+//*********** Blocks Operation at top level**********************************************
+//
+  WITHIN BLOCKS("B1")
+     VCHOKE : TRUE;
+     VALGEO : FALSE;
+     CAVIND : FALSE;
+
+  ENDWITHIN;
+
+  WITHIN BLOCKS("B1")
+    COMPONENTLIST : "Type1";
+    VALIDPHASES : "Vapor-Liquid";
+    PRESMODE : "Simple";
+    CHAR_EQN : "NONE";
+
+      In_F.F : 1.000000000000e+00;
+      In_F.T : 1.000000000000e+01;
+      In_F.P : 1.000000000000e+00;
+      In_F.H : -2.869561339247e-01;
+      F : 1.000000000000e+00;
+      F_ : 1.000000000000e+00;
+      Out_P.F : 1.000000000000e+00;
+      Out_P.T : 1.000233230000e+01;
+      Out_P.P : 9.000000000000e-01;
+      Out_P.H : -2.869561339247e-01;
+      Out_P.Z("H2O") : 1.000000000000e+00;
+      In_F.Z("H2O") : 1.000000000000e+00;
+      X("H2O") : 1.000000000000e+00;
+      X_O("H2O") : 1.000000000000e+00;
+        Y("H2O") : 0.000000000000e+00;
+         Y_O("H2O") : 0.000000000000e+00;
+       Out_P.V : 1.801886269685e-02 ;
+
+    FVOL :      1.801886269685e-02;
+    RHOS :      5.549739830000e+01;
+    C0 :      2.548011392886e+00;
+    C0MAX :      5.096022785772e+00;
+    LF :      1.000000000000e+00;
+    VF :      0.000000000000e+00;
+    HL :     -2.869561339247e-01;
+    HV :      0.000000000000e+00;
+    VF_O :      0.000000000000e+00;
+    LF_O :      1.000000000000e+00;
+    RHOV :      1.000000000000e-05;
+    RHOL :      5.549739830000e+01;
+    RHO :      5.549739830000e+01;
+    YFAC :      1.000000000000e+00;
+    MW :      1.801528000000e+01;
+    MWL :      1.801528000000e+01;
+    MWV :      1.801528000000e+01;
+    RHOV_O :      1.000000000000e-05;
+    RHOL_O :      5.549712510000e+01;
+    HV_O :      0.000000000000e+00;
+    POS :      5.000000000000e+01;
+    XPR :      1.000000000000e-01;
+    P_DROP :      1.000000000000e-01;
+    DPV_L :      1.000000000000e+00;
+    DPL_L :      1.000000000000e+00;
+    DP_CHOKE :      1.000000000000e+00;
+    PDROPC :      1.000000000000e-01;
+  ENDWITHIN;
+
+  WITHIN BLOCKS("B1").PFLASH2(1)
+      X("H2O") : 1.000000000000e+00;
+      Y("H2O") : 0.000000000000e+00;
+
+    H :     -2.869561339247e-01;
+    P :      1.000000000000e+00;
+    T :      1.000000000000e+01;
+    LF :      1.000000000000e+00;
+    VF :      0.000000000000e+00;
+    LFACTOR :      0.000000000000e+00;
+    VFACTOR :      1.000000000000e-01;
+    ZFACTOR :      1.000000000000e+00;
+    HL :     -2.869561339247e-01;
+    HV :      0.000000000000e+00;
+    RHOV :      1.000000000000e-05;
+    RHOL :      5.549739830000e+01;
+    RHOML :      9.998011696460e+02;
+    MWL :      1.801528000000e+01;
+    MWV :      1.801528000000e+01;
+  ENDWITHIN;
+
+  WITHIN BLOCKS("B1").PFLASH2O(1)
+      X("H2O") : 1.000000000000e+00;
+      Y("H2O") : 0.000000000000e+00;
+
+    P :      9.000000000000e-01;
+    T :      1.000233230000e+01;
+    VF :      0.000000000000e+00;
+    LFACTOR :      0.000000000000e+00;
+    VFACTOR :      1.000000000000e-01;
+    ZFACTOR :      1.000000000000e+00;
+    HL :     -2.869561339247e-01;
+    HV :      0.000000000000e+00;
+    RHOV :      1.000000000000e-05;
+    RHOL :      5.549712510000e+01;
+    RHOML :      9.997962478715e+02;
+    MWL :      1.801528000000e+01;
+    MWV :      1.801528000000e+01;
+  ENDWITHIN;
+
+  WITHIN BLOCKS("B1")
+
+  ENDWITHIN;
+
+  WITHIN STREAMS("S1")
+    Componentlist : "Type1";
+
+
+    FlowBasis : "Mole";
+    CompBasis : "Mole-Flow"; 
+    ValidPhases : "Vapor-Liquid";
+    MWC("H2O") : 1.801528000000e+01;
+    In_F.F : 1.000000000000e+00;
+    Out_P.F : 1.000000000000e+00;
+    TotFlowSpec : True;
+    FcR("H2O") : 1.000000000000e+00;
+    Zn("H2O") : 1.000000000000e+00;
+    In_F.Z("H2O") : 1.000000000000e+00;
+    Out_P.Z("H2O") : 1.000000000000e+00;
+    Zmn("H2O") : 1.000000000000e+00;
+    Fcn("H2O") : 1.000000000000e+00;
+    Fmcn("H2O") : 1.801528000000e+01;
+    FeedSpec : "TP";
+    In_F.T : 1.000000000000e+01;
+    Out_P.T : 1.000000000000e+01;
+    In_F.P : 1.000000000000e+00;
+    Out_P.P : 1.000000000000e+00;
+    In_F.h : -2.869561339247e-01;
+    Out_P.h : -2.869561339247e-01;
+    y("H2O") : 0.000000000000e+00;
+    y("H2O") : 1.000000000000e+00;
+       x("H2O") : 1.000000000000e+00;
+
+    F :      1.000000000000e+00;
+    FM :      1.801528000000e+01;
+    FR :      1.000000000000e+00;
+    T :      1.000000000000e+01;
+    P :      1.000000000000e+00;
+    H :     -2.869561339247e-01;
+    RHO :      5.549739830000e+01;
+    MW :      1.801528000000e+01;
+    VF :      0.000000000000e+00;
+    VFR :      0.000000000000e+00;
+    LF :      1.000000000000e+00;
+    RHOV :      1.000000000000e+00;
+    RHOL :      5.549739830000e+01;
+    MWV :      1.000000000000e+00;
+    MWL :      1.801528000000e+01;
+  ENDWITHIN;
+
+  WITHIN STREAMS("S1").pflash2(1)
+      Z("H2O") : 1.000000000000e+00;
+      y("H2O") : 1.000000000000e+00;
+      x("H2O") : 1.000000000000e+00;
+      k("H2O") : 1.000000000000e+00;
+
+    T :      1.000000000000e+01;
+    P :      1.000000000000e+00;
+    H :     -2.869561339247e-01;
+    VF :      0.000000000000e+00;
+    VFR :      0.000000000000e+00;
+    LF :      1.000000000000e+00;
+    VFACTOR :      1.000000000000e-01;
+    LFACTOR :      0.000000000000e+00;
+    ZFACTOR :      1.000000000000e+00;
+    HV :     -2.869561339247e-01;
+    HL :     -2.869561339247e-01;
+    RHOV :      1.000000000000e+00;
+    RHOL :      5.549739830000e+01;
+    MWV :      1.000000000000e+00;
+    MWL :      1.801528000000e+01;
+  ENDWITHIN;
+
+  WITHIN STREAMS("S1")
+
+  ENDWITHIN;
+
+  WITHIN STREAMS("S2")
+    Componentlist : "Type1";
+
+    ValidPhases : "Liquid-Only";
+    MWC("H2O") : 1.801528000000e+01;
+    In_F.F : 1.000000000000e+00;
+    Out_P.F : 1.000000000000e+00;
+    Zn("H2O") : 1.000000000000e+00;
+    In_F.Z("H2O") : 1.000000000000e+00;
+    Out_P.Z("H2O") : 1.000000000000e+00;
+    Zmn("H2O") : 1.000000000000e+00;
+    Fcn("H2O") : 1.000000000000e+00;
+    Fmcn("H2O") : 1.801528000000e+01;
+    In_F.T : 1.000233230000e+01;
+    Out_P.T : 1.000233230000e+01;
+    In_F.P : 9.000000000000e-01;
+    Out_P.P : 9.000000000000e-01;
+    In_F.h : -2.869561339247e-01;
+    Out_P.h : -2.869561339247e-01;
+
+    F :      1.000000000000e+00;
+    FR :      1.000000000000e+00;
+    FM :      1.801528000000e+01;
+    FMR :      1.801528000000e+01;
+    FV :      1.801895139970e-02;
+    T :      1.000233230000e+01;
+    P :      9.000000000000e-01;
+    H :     -2.869561339247e-01;
+    RHO :      5.549712510000e+01;
+    RHOM :      9.997962478715e+02;
+    MW :      1.801528000000e+01;
+  ENDWITHIN;
+
+//
+//*********** End of Blocks Operation at top level****************************************
+//
+
+//
+//*********** Global Reactions/Chemistry Structure declaration**********************************************
+//
+//
+//*********** End of Global Reactions/Chemistry Structure****************************************
+//
+
+//
+//*********** Global Reactions/Chemistry Structure declaration**********************************************
+//
+//
+//*********** End of Global Reactions/Chemistry Structure****************************************
+//
+
+//
+//*********** ACM Global Structures**********************************************
+//
+//
+//*********** End of ACM Global Structures****************************************
+//
+
+END;  // END of FLOWSHEET Section
